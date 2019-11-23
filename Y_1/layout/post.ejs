@@ -1,0 +1,12 @@
+<article class="post">
+	<h1>
+		<a class="title" href="<%- url_for(page.path) %>"> 
+		<%= page.title %> 
+		</a>
+	</h1>
+	<%- partial('_partial/meta') %>
+	<%- partial('_partial/toc') %>
+	<div class="content">
+		<%- page.content %>
+	</div>
+</article>
