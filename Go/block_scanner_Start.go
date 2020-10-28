@@ -2,8 +2,6 @@ package main
 
 import (
 	"./sql"
-	"fmt"
-	"time"
 )
 
 var mainNet string ="https://mainnet.infura.io/v3/2e6d9331f74d472a9d47fe99f697ca2b"
@@ -23,10 +21,10 @@ func TestBlockScanner_Start()  {
 		MaxIdleConnections:5,
 		ConnMaxLifetime: 15,
 	}
+
 	tables := []interface{}{}
-	tables = append(tables,sql.Transaction_Scan{},sql.Transaction_Scan{})
+	tables = append(tables,sql.Block{},sql.TransactionScan{})
 	mysql := sql.NewMqSQLConnector(&option,tables)
-	fmt.Println("POP")
 	CMD := make(chan bool,1)
 	scanner := NewBlockScanner(*requestor,mysql)
 	err := scanner.Start(CMD)
@@ -35,9 +33,7 @@ func TestBlockScanner_Start()  {
 		panic(err)
 	}
 	for{
-		if il,ok:=<-CMD;ok&&il!=true{
-			time.Sleep(2 * time.Second) 
-		}else{
+		if _,ok:=<-CMD;ok{
 			break
 		}
 	}

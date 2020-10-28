@@ -58,108 +58,60 @@ func (logget *LogGet)LogStart(address string)error{
 	return nil
 }
 
-func (logget *LogGet)GET_Block(Number string)error{
-	fmt.Println(Number)
-	ten := logget.hexToTen(Number)
-	fmt.Println(ten)
-	fullBlock, err := logget.ethRequester.GetBlockInfoByNumber(ten)
-	il,_ := json.Marshal(fullBlock.Transactions)
-	fmt.Println(string(il))
-	if err != nil{
-		return err
-	}
-	tx := logget.mysql.Db.NewSession()//
-	defer tx.Close()
-	fmt.Println("Failed")
-
-	blocklog:= sql.Log{}
-	//_, err = tx.Where("block_Hash=?", fullBlock.Address).Get(&blocklog)
-	if err == nil && blocklog.Address == "" {
-		//blocklog.BlockNumber = logget.hexToTen(string(fullBlock.BlockNumber)).String()
-		//blocklog.BlockHash = 
-		//blocklog.Timestamp = 
-		//blocklog.BlockHash = logget.hexToTen(fullBlock.BlockHash).String()
-		//blocklog.Logs = 
-		/*
-		if _, err := tx.Insert(&blocklog); err != nil{//insert
-			tx.Rollback()
-			return err
-		}
-		*/
-		fmt.Println("*Insert*")
-	}
-	return nil
-}
-
 func (logget *LogGet)GET()error{
 	fullBlock, err := logget.ethRequester.GetTransactionReceipt(logget.logs.Address)
-	//ten, _ := new(big.Int).SetString("8896244",7)
 	il,_ := json.Marshal(fullBlock)
 	fmt.Println(string(il))
 	if err != nil{
 		return err
 	}
-	tx := logget.mysql.Db.NewSession()//
+	tx := logget.mysql.Db.NewSession()
 	defer tx.Close()
-	fmt.Println("Failed")
 
-	blocklog:= sql.Log{}
-	//_, err = tx.Where("block_Hash=?", fullBlock.Address).Get(&blocklog)
-	if err == nil && blocklog.Address == "" {
-		//blocklog.BlockNumber = logget.hexToTen(string(fullBlock.BlockNumber)).String()
-		//blocklog.BlockHash = 
-		//blocklog.Timestamp = 
-		//blocklog.BlockHash = logget.hexToTen(fullBlock.BlockHash).String()
-		//blocklog.Logs = 
-		/*
-		if _, err := tx.Insert(&blocklog); err != nil{//insert
-			tx.Rollback()
-			return err
+	for _,LogS := range fullBlock.Logs{
+		if (len(LogS.Data[2:])==64){
+			blocklog := sql.TransactionLogCopyright{}
+			blocklog.BlockNumber = logget.hexToTen(string(fullBlock.BlockNumber)).String()
+			blocklog.BlockHash = fullBlock.BlockHash
+			blocklog.Address =  LogS.Address
+			blocklog.Topics = LogS.Topics
+			blocklog.Data = append(blocklog.Data,LogS.Data)
+			blocklog.TxHash = LogS.TxHash
+			blocklog.TxIndex = LogS.TxIndex
+			blocklog.Index = LogS.Index
+			blocklog.Removed = LogS.Removed
+			if _, err := tx.Insert(&blocklog); err != nil{//insert
+				tx.Rollback()
+				return err
+			}
+		}else{
+			blocklog := sql.TransactionLogPurchase{}
+			blocklog.BlockNumber = logget.hexToTen(string(fullBlock.BlockNumber)).String()
+			blocklog.BlockHash = fullBlock.BlockHash
+			blocklog.Address =  LogS.Address
+			blocklog.Topics = LogS.Topics
+			for i:=0;i<(len(LogS.Data)-2)/64;i++{
+				fmt.Println(i,LogS.Data[2+i*64:66+i*64])
+				blocklog.Data = append(blocklog.Data,LogS.Data[2+i*64:66+i*64])
+			}
+			blocklog.TxHash = LogS.TxHash
+			blocklog.TxIndex = LogS.TxIndex
+			blocklog.Index = LogS.Index
+			blocklog.Removed = LogS.Removed
+			if _, err := tx.Insert(&blocklog); err != nil{//insert
+				tx.Rollback()
+				return err
+			}
 		}
-		*/
-		fmt.Println("*Insert*")
-	}
-	return nil
-}
-
-func (logget *LogGet)GET_Transaction_ByHash()error{
-	fullBlock, err := logget.ethRequester.GetTransactionByHash(logget.logs.Address)
-	//ten, _ := new(big.Int).SetString("8896244",7)
-	il,_ := json.Marshal(fullBlock)
-	fmt.Println(string(il))
-	if err != nil{
-		return err
-	}
-	tx := logget.mysql.Db.NewSession()//
-	defer tx.Close()
-	fmt.Println("Failed")
-
-	blocklog:= sql.Log{}
-	//_, err = tx.Where("block_Hash=?", fullBlock.Address).Get(&blocklog)
-	if err == nil && blocklog.Address == "" {
-		//blocklog.BlockNumber = logget.hexToTen(string(fullBlock.BlockNumber)).String()
-		//blocklog.BlockHash = 
-		//blocklog.Timestamp = 
-		//blocklog.BlockHash = logget.hexToTen(fullBlock.BlockHash).String()
-		//blocklog.Logs = 
-		/*
-		if _, err := tx.Insert(&blocklog); err != nil{//insert
-			tx.Rollback()
-			return err
-		}
-		*/
-		fmt.Println("*Insert*")
+		
 	}
 	return nil
 }
 
 func (scanner *LogGet) LogInit(address string) error  {
-	//_, err := scanner.mysql.Db.Desc("create_time").Where("fork = ?",false).Get(scanner.logs.ContractAddress)
-	//if err != nil{return err}
 	if scanner.logs.Address == ""{
-		fmt.Printf("Adress is : %s\n",address)
+		//fmt.Printf("Adress is : %s\n",address)
 		scanner.logs.Address = address
-		
 	}
 	return nil
 }
@@ -182,7 +134,7 @@ func TestGetLogByHash(ad string)error{
 		ConnMaxLifetime: 15,
 	}
 	tables := []interface{}{}
-	//tables = append(tables,sql.Log{},sql.Transaction{})
+	tables = append(tables,sql.TransactionLogCopyright{},sql.TransactionLogPurchase{})
 	mysql := sql.NewMqSQLConnector(&option,tables)
 
 	logget:= NewLogGet(*requestor,mysql)
@@ -190,7 +142,6 @@ func TestGetLogByHash(ad string)error{
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("*end*")
 
 	return nil
 }

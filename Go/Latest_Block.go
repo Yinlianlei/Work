@@ -16,7 +16,7 @@ func NewLatestBlockGetter(requester ETHRPCRequester) *LatestBlockGetter {
 func test_Latest_Block(){
 	requestor := NewETHRPCRequester(mainNet)
 	LB := NewLatestBlockGetter(*requestor)
-	 n,err :=LB.ethRequester.GetLatestBlockNumber()
-	 fmt.Println(n,err)
+	n,err :=LB.ethRequester.GetLatestBlockNumber()
+	fmt.Println(n,err)
 }
 

@@ -1,15 +1,15 @@
 package sql
 
 type Log struct{
-	Address string `json:"address" gencodec:"required"`
-	Topics []string `json:"topics" gencodec:"required"`
-	Data []byte `json:"data" gencodec:"required"`
-	BlockNumber uint64 `json:"blockNumber"`
-	TxHash string`json:"transactionHash" gencodec:"required"`
-	TxIndex uint `json:"transactionIndex"`
-	BlockHash string `json:"blockHash"`
-	Index uint64 `json:"logIndex"`
-	Removed bool `json:"removed"`
+	BlockNumber string `json:"blockNumber" xorm:"not null varchar(255)"`
+	BlockHash string `json:"blockHash" xorm:"not null "`
+	Address string `json:"address" gencodec:"required"  xorm:"not null "`
+	Topics []string `json:"topics" gencodec:"required" xorm:"not null "`
+	Data string `json:"data" gencodec:"required" xorm:"not null "`
+	TxHash string`json:"transactionHash" gencodec:"required" xorm:"not null "`
+	TxIndex string `json:"transactionIndex" xorm:"not null VARCHAR(255) "`
+	Index string `json:"logIndex" xorm:"not null VARCHAR(255)"`
+	Removed bool `json:"removed" xorm:"not null "`
 }
 /*
 type LOG struct{

@@ -1,15 +1,12 @@
 package model
 
-import(
-	//"github.com/ethereum/go-ethereum/core/types"
-	//"math/big"
-)
+import "../sql"
 
 type Transaction_log struct {
 	//Hash             string    	`json:"hash"`
 	//Nonce            string 	`json:"nonce"`
-	//BlockHash        string    	`json:"blockHash"`
-	//BlockNumber      string 	`json:"blockNumber"`
+	BlockNumber      string 	`json:"blockNumber"`
+	BlockHash        string    	`json:"blockHash"`
 	//TransactionIndex string 	`json:"transactionIndex"`
 	From             string    	`json:"from"`
 	To               string    	`json:"to"`
@@ -20,7 +17,7 @@ type Transaction_log struct {
 	//CumulativeGasUsed string `json:"CumulativeGasUsed"`
 	//ContractAddress string `json:"contract_address"`
 	//GasUsed  string`json:"gas_used"`
-	Logs []Log `json:"Logs"`
+	Logs []sql.Log `json:"Logs"`
 	//LosgBloom string `json:"logsbloom"`
 	//Root string `json:"root"`
 

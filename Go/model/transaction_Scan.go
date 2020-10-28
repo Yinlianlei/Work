@@ -24,5 +24,5 @@ type Transaction_Scan struct {
 	//GasUsed          string   	`json:"gasUsed"`
 	Timestamp        string   	`json:"timestamp"`
 	//Uncles           []string   `json:"uncles"`
-	Transactions 	 []sql.Transaction_Scan 	`json:"transactions"`
+	Transactions 	 []sql.TransactionScan 	`json:"transactions"`
 }

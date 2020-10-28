@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -27,16 +28,6 @@ func NewETHRPCRequester(nodeUrl string) *ETHRPCRequester {
 	return requester
 }
 
-// 根据交易的 hash 值获取对应交易的log
-func (r *ETHRPCRequester) GetTransactionReceipt(txHash string) (model.Transaction_log, error) {
-	methodName := "eth_getTransactionReceipt"
-	result := model.Transaction_log{}
-	// 下面 call 的 result 传入的是  model.Transaction 结构体的引用，
-	// 这样内部所设置的值在函数执行完之后才能依然有效果
-	err := r.client.GetRpc().Call(&result, methodName, txHash)
-	return result, err
-}//
-
 // 根据交易的 hash 值获取对应交易的信息
 func (r *ETHRPCRequester) GetTransactionByHash(txHash string) (model.Transaction, error) {
 	methodName := "eth_getTransactionByHash"
@@ -46,15 +37,6 @@ func (r *ETHRPCRequester) GetTransactionByHash(txHash string) (model.Transaction
 	err := r.client.GetRpc().Call(&result, methodName, txHash)
 	return result, err
 }
-
-func (r *ETHRPCRequester) GetTransactionByHash1(txHash string) (model.Transaction_log, error) {
-	methodName := "eth_getTransactionByHash"
-	result := model.Transaction_log{}
-	// 下面 call 的 result 传入的是  model.Transaction 结构体的引用，
-	// 这样内部所设置的值在函数执行完之后才能依然有效果
-	err := r.client.GetRpc().Call(&result, methodName, txHash)
-	return result, err
-}//
 
 // 根据交易 hash 字符串数组批量获取对应的交易信息
 func (r *ETHRPCRequester) GetTransactions(txHashs []string) ([]*model.Transaction, error) {
@@ -353,19 +335,6 @@ func (r *ETHRPCRequester) GetLatestBlockNumber() (*big.Int, error) {
 	return ten, nil
 }
 
-func (r *ETHRPCRequester) GetLatestBlockNumber1() (*big.Int, error) {
-	methodName := "eth_getBlockByNumber"
-	number :=""
-	method := "latest"
-	// eth_blockNumber 不需要参数
-	err := r.client.client.Call(&number, methodName,method,true)
-	if err != nil {
-		return nil, fmt.Errorf("获取最新区块号失败! %s", err.Error())
-	}
-	ten,_ := new(big.Int).SetString(number[2:],16)
-	return ten, nil
-}//
-
 // 根据区块号，获取区块信息
 func (r *ETHRPCRequester) GetBlockInfoByNumber(blockNumber *big.Int) (*model.FullBlock, error) {
 	number := fmt.Sprintf("%#x", blockNumber)
@@ -383,22 +352,6 @@ func (r *ETHRPCRequester) GetBlockInfoByNumber(blockNumber *big.Int) (*model.Ful
 	return &fullBlock, nil
 }
 
-func (r *ETHRPCRequester) GetBlockInfoByNumber2(blockNumber *big.Int) (*model.Transaction_Scan, error) {
-	number := fmt.Sprintf("%#x", blockNumber)
-	methodName := "eth_getBlockByNumber"
-	fullBlock := model.Transaction_Scan{}
-	// eth_getBlockByNumber 的第二个参数：
-	// 如果是 true，则返回完整的区块信息，false 则 transaction 部分只返回交易hash数组
-	err := r.client.client.Call(&fullBlock, methodName, number, true)
-	if err != nil {
-		return nil, fmt.Errorf("get block info failed! %s", err.Error())
-	}
-	if fullBlock.Number == "" {
-		return nil, fmt.Errorf("block info is empty %s",blockNumber.String())
-	}
-	return &fullBlock, nil
-}//
-
 // 根据区块 hash，获取区块信息
 func (r *ETHRPCRequester) GetBlockInfoByHash(blockHash string) (*model.FullBlock, error) {
 	methodName := "eth_getBlockByHash"
@@ -414,19 +367,3 @@ func (r *ETHRPCRequester) GetBlockInfoByHash(blockHash string) (*model.FullBlock
 	}
 	return &fullBlock, nil
 }
-
-func (r *ETHRPCRequester) GetBlockInfoByHash1(blockHash string) (*model.Transaction_Scan, error) {
-	methodName := "eth_getBlockByHash"
-	fullBlock := model.Transaction_Scan{}
-	// eth_getBlockByHash 的第二个参数：
-	// 如果是 true，则返回完整的区块信息，false 则 transaction 部分只返回交易hash数组
-	err := r.client.client.Call(&fullBlock, methodName, blockHash, true)
-	if err != nil {
-		return nil, fmt.Errorf("get block info failed! %s", err.Error())
-	}
-	if fullBlock.Number == "" {
-		return nil, fmt.Errorf("block info is empty %s",blockHash)
-	}
-	return &fullBlock, nil
-}//
-

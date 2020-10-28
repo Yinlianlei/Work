@@ -72,8 +72,8 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 		return err
 	}
 	
-	execute := func() {
-		if err := scanner.scan(); nil != err {
+	execute := func(i *big.Int) {
+		if err := scanner.scan(i); nil != err {
 			scanner.log(err.Error())
 			return
 		}
@@ -82,22 +82,24 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 	
 	// 启动一个协程来遍历区块
 	go func(){
-		i:=0
+		i,_:=scanner.ethRequester.GetLatestBlockNumber()
+		fmt.Println("Newest Block Number Is ",i)
+		ts:=0
 		for {
 			select {
 			case <-scanner.stop: // 监听是否退出遍历
 				scanner.log("finish block scanner!")
+				CMD<-true
 				return
 			default:
 				if !scanner.fork {
-					execute()
-					//fmt.Println("233")
-					i++
-					if i==12 {
+					if i==scanner.lastNumber && ts<=12 {
 						scanner.Stop()
-						CMD<-true
 						return
 					}
+					//ts++
+					execute(i)
+					//fmt.Println("233")
 					continue
 				}
 				if err := init();err != nil {
@@ -108,7 +110,6 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 			}
 		}
 	}()
-	defer fmt.Println("FinishBlockScanner")
 	return nil
 }
 
@@ -197,7 +198,7 @@ func (scanner *BlockScanner) retryGetBlockInfoByNumber(targetNumber *big.Int) (*
 
 func (scanner *BlockScanner) retryGetBlockInfoByHash(hash string) (*model.Transaction_Scan,error) {
 	Retry:
-		fullBlock, err := scanner.ethRequester.GetBlockInfoByHash(hash)
+		fullBlock, err := scanner.ethRequester.GetBlockInfoByHash1(hash)
 		if err != nil {
 			errInfo := err.Error()
 			if strings.Contains(errInfo,"empty") {
@@ -211,14 +212,14 @@ func (scanner *BlockScanner) retryGetBlockInfoByHash(hash string) (*model.Transa
 }
 
 // 扫描区块
-func (scanner *BlockScanner) scan() error {
+func (scanner *BlockScanner) scan(i *big.Int) error {
 	// 获取公链上最新生成的区块
-	newBlockNumber, err := scanner.ethRequester.GetLatestBlockNumber()
-	if err != nil {
-		return err
-	}
+	//newBlockNumber, err := scanner.ethRequester.GetLatestBlockNumber()
+	//if err != nil {
+	//	return err
+	//}
 
-	latestNumber := newBlockNumber
+	latestNumber := i
 	targetNumber := scanner.lastNumber
 	// 比较区块号大小
 	// -1 if x <  y
@@ -226,6 +227,9 @@ func (scanner *BlockScanner) scan() error {
 	// +1 if x >  y
 	if latestNumber.Cmp(scanner.lastNumber) < 0 {
 		// 小，则等待新区块生成
+		scanner.Stop()
+		return nil
+		/*
 		Next:
 		for {
 			select {
@@ -237,6 +241,7 @@ func (scanner *BlockScanner) scan() error {
 				}
 			}
 		}
+		*/
 	}
 	// 获取区块信息
 	fullBlock, err := scanner.retryGetBlockInfoByNumber(targetNumber)
@@ -277,8 +282,8 @@ func (scanner *BlockScanner) scan() error {
 	// 解析区块内数据，读取内部的 “transactions” 交易信息，分析得出各种合约事件
 	//it,_:=json.Marshal(fullBlock.Transactions[1:4])
 	//fmt.Println(string(it))
-	scanner.log("scan block start ==> ","number: ", scanner.hexToTen(fullBlock.Number),"hash: ",fullBlock.Hash)
-	scanner.log("Number:\t",fullBlock.Number,"\nHash:\t",fullBlock.Hash,"\nParentHash: ",fullBlock.ParentHash,"\nNonce:\t",fullBlock.Nonce,"\nTimestamp:\t",fullBlock.Timestamp,"\nTransaction:\n")
+	scanner.log("number: \t", scanner.hexToTen(fullBlock.Number),"\nhash:\t\t",fullBlock.Hash)
+	scanner.log("ParentHash:\t",fullBlock.ParentHash,"\nNonce:\t\t",fullBlock.Nonce,"\nTimestamp:\t",fullBlock.Timestamp,"\nTransaction:")
 	for index, transaction := range fullBlock.Transactions {
 		// 下面的打印操作模拟自定义处理。对于每条 tx，我们是完全可以进一步从里面提取信息的！
 		scanner.log(index,"==> ",transaction.Hash)
@@ -295,286 +300,3 @@ func (scanner *BlockScanner) scan() error {
 	}
 	return tx.Commit()
 }
-
-/*
-type BlockScanner struct{
-	ethRequester ETHRPCRequester
-	mysql sql.MySQLConnector
-	lastBlock *sql.Block
-	lastNumber *big.Int
-	fork bool
-	stop chan bool
-	lock sync.Mutex
-}
-
-func NewBlockScanner(requester ETHRPCRequester, mysql sql.MySQLConnector)*BlockScanner{
-	return &BlockScanner{
-		ethRequester: requester,
-		mysql: mysql,
-		lastBlock: &sql.Block{},
-		fork: false,
-		stop: make(chan bool),
-		lock: sync.Mutex{},
-	}
-}
-
-func (scanner *BlockScanner) isFork(currentBlock * sql.Block)bool{
-	if currentBlock.BlockNumber == "" {
-		panic("invalid block")
-	}
-	if scanner.lastBlock.BlockHash == currentBlock.ParentHash{
-		scanner.lastBlock = currentBlock
-		return false
-	}
-	return true
-}
-
-func (scanner * BlockScanner) getStartForkBlock(parentHash string) (*sql.Block,error){
-	parent := sql.Block{};
-	_, err := scanner.mysql.Db.Where("block_hash=?",parentHash).Get(&parent)
-	if err == nil && parent.BlockNumber != ""{
-		return &parent, nil
-	}
-	parentFull,err := scanner.retryGetBlockInfoByHash(parentHash)
-	if err!=nil {
-		return nil, fmt.Errorf("Error in fork, try again %s",err.Error())
-	}
-	return scanner.getStartForkBlock(parentFull.ParentHash)
-}
-
-func (scanner *BlockScanner)log(args ...interface{})  {
-	fmt.Println(args...)
-}
-
-func (scanner *BlockScanner) retryGetBlockInfoByNumber(targetNumber *big.Int) (*model.Transaction_Block,error){
-	Retry:
-		fullBlock, err := scanner.ethRequester.GetBlockInfoByNumber(targetNumber)
-		if err != nil{
-			errInfo := err.Error()
-			if strings.Contains(errInfo, "empty"){
-				scanner.log("Try again, ", targetNumber.String())
-				goto Retry
-			}
-			return nil,err
-		}
-		return fullBlock, nil
-}
-
-func (scanner *BlockScanner) retryGetBlockInfoByHash(hash string)(*model.FullBlock,error){
-	Retry:
-		fullBlock,err := scanner.ethRequester.GetBlockInfoByHash(hash)
-		if err != nil{
-			errInfo := err.Error()
-				if strings.Contains(errInfo, "empty"){
-					scanner.log("Try again! ", hash) 
-					goto Retry
-				}
-				return nil,err
-			}
-		return fullBlock,nil
-}
-
-func (scanner *BlockScanner) getForkBlock(parentHash string) (*sql.Block, error) {
-	// 获取当前区块的父区块，分叉从父区块开始
-	parent := sql.Block{}
-	_, err := scanner.mysql.Db.Where("block_hash=?", parentHash).Get(&parent)
-	if err == nil && parent.BlockNumber != "" {
-		return &parent, nil
-	}
-	// 数据库没有父区块记录，准备从以太坊接口获取
-	parentFull, err := scanner.retryGetBlockInfoByHash(parentHash)
-	if err != nil {
-		return nil, fmt.Errorf("分叉严重错误，需要重启区块扫描 %s",err.Error())
-	}
-	// 继续递归往上查询，直到在数据库中有它的记录
-	return scanner.getForkBlock(parentFull.ParentHash)
-}
-
-func (scanner *BlockScanner) forkCheck(currentBlock *sql.Block) bool {
-	if currentBlock.BlockNumber == "" {
-		panic("invalid block")
-	}
-	if scanner.lastBlock.BlockHash == currentBlock.BlockHash || scanner.lastBlock.BlockHash == currentBlock.ParentHash {
-		scanner.lastBlock = currentBlock // 更新
-		return false
-	}
-	// 获取出最初开始分叉的那个区块
-	forkBlock, err := scanner.getForkBlock(currentBlock.ParentHash)
-	if err != nil {
-		panic(err)
-	}
-	scanner.lastBlock = forkBlock // 更新。从这个区块开始，其之后的都是分叉的
-
-	// 修改数据库记录，将分叉区块标记好
-	numberEnd := ""
-	if strings.HasPrefix(currentBlock.BlockNumber, "0x") {
-		c, _ := new(big.Int).SetString(currentBlock.BlockNumber[2:], 16)
-		numberEnd = c.String()
-	} else {
-		c, _ := new(big.Int).SetString(currentBlock.BlockNumber, 10)
-		numberEnd = c.String()
-	}
-	numberFrom := forkBlock.BlockNumber
-	_, err = scanner.mysql.Db.
-		Table(sql.Block{}).
-		Where("block_number > ? and block_number <= ?", numberFrom, numberEnd). // 区块号范围内
-		Update(map[string]bool{"fork": true})
-	if err != nil {
-		panic(fmt.Errorf("update fork block failed %s", err.Error()))
-	}
-	return true
-}
-
-func (scanner *BlockScanner) init() error  {
-	_, err := scanner.mysql.Db.Desc("create_time").Where("fork = ?",false).Get(scanner.lastBlock)
-	if err != nil{
-		return err
-	}
-	if scanner.lastBlock.BlockHash == ""{
-		latestBlockNumber, err := scanner.ethRequester.GetLatestBlockNumber()
-		fmt.Println(latestBlockNumber)
-		if err != nil{
-			return err
-		}
-		latestBlock,err := scanner.ethRequester.GetBlockInfoByNumber(latestBlockNumber)
-		fmt.Println(latestBlock)
-		if err != nil{
-			return err
-		}
-		if latestBlock.Number == "" {
-			panic(latestBlockNumber.String())
-		}
-		scanner.lastBlock.BlockHash = latestBlock.Hash
-		scanner.lastBlock.ParentHash = latestBlock.ParentHash
-		scanner.lastBlock.BlockNumber = latestBlock.Number
-		scanner.lastBlock.CreateTime = scanner.hexToTen(latestBlock.Timestamp).Int64()
-		scanner.lastNumber = latestBlockNumber
-	}else{
-		scanner.lastNumber, _ = new(big.Int).SetString(scanner.lastBlock.BlockNumber,10)
-		scanner.lastNumber.Add(scanner.lastNumber,new(big.Int).SetInt64(1))
-	}
-	return nil
-}
-
-func (scanner * BlockScanner) hexToTen(hex string) *big.Int{
-	if !strings.HasPrefix(hex,"0x"){
-		ten, _ := new (big.Int).SetString(hex,10)
-		return ten
-	}
-	ten, _ := new(big.Int).SetString(hex[2:], 16)
-	return ten
-}
-
-func (scanner *BlockScanner) getSacnnerBlockNumber()(*big.Int,error){
-	newBlockNumber, err := scanner.ethRequester.GetLatestBlockNumber()
-	if err != nil{
-		return nil,err
-	}
-	latestNumber := newBlockNumber
-	targetNumber := new(big.Int).Set(scanner.lastNumber)
-	if latestNumber.Cmp(scanner.lastNumber) <0 {
-		Next:
-			for{
-				select{
-				case <-time.After(time.Duration(4*time.Second)):
-					number, err := scanner.ethRequester.GetLatestBlockNumber()
-					if err==nil && number.Cmp(scanner.lastNumber) >= 0{
-						break Next
-					}
-				}
-			}
-	}
-	return targetNumber,nil
-}
-
-func (scanner *BlockScanner)scan()error{
-	targetNumber, err := scanner.getSacnnerBlockNumber()
-	if err!=nil {
-		return err
-	}
-
-	fullBlock, err := scanner.retryGetBlockInfoByNumber(targetNumber)
-	if err != nil{
-		return err
-	}
-	scanner.lastNumber.Add(scanner.lastNumber, new(big.Int).SetInt64(1))
-	tx := scanner.mysql.Db.NewSession()//
-	defer tx.Close()
-
-	block:=sql.Block{}
-	_, err = tx.Where("block_Hash=?", fullBlock.Hash).Get(&block)
-	if err == nil && block.Id == 0 {
-		block.BlockNumber = scanner.hexToTen(fullBlock.Number).String()
-		block.ParentHash = "Yinlianlei"
-		block.CreateTime = scanner.hexToTen(fullBlock.Timestamp).Int64()
-		block.BlockHash = fullBlock.Hash
-		block.Fork = false
-		if _, err := tx.Insert(&block); err != nil{//insert
-			tx.Rollback()
-			return err
-		}
-	}
-
-	if scanner.forkCheck(&block)  {
-		data, err := json.Marshal(fullBlock)
-		if err != nil{
-			return nil
-		}
-		scanner.log("FORK!",string(data))
-		tx.Commit()
-		scanner.fork = true
-		return errors.New("fork check")
-	}
-
-	scanner.log(
-		"Scan block start ==>","number: ",scanner.hexToTen(fullBlock.Number),"hash: ",fullBlock.Hash)
-	for index, transaction := range fullBlock.Transactions{
-		scanner.log("tx hash ===> ", transaction.Hash)
-		if index == 5 {
-			break
-		}
-	}
-	scanner.log("scan block finish \n---------------------------")
-	if _, err = tx.Insert(&fullBlock.Transactions);err != nil{
-		tx.Rollback()
-		return err
-	}
-	return tx.Commit()
-}
-
-func (scanner *BlockScanner)Start() error {
-	scanner.lock.Lock()
-	if err := scanner.init();err!=nil{
-		scanner.lock.Unlock()
-		return err
-	}
-	for i:=0;i<3;i++{
-			select {
-				case <-scanner.stop: // 监听是否退出遍历
-				scanner.log("finish block scanner!")
-			default:
-				if !scanner.fork {
-					{
-						if err := scanner.scan();err != nil{
-							scanner.log(err.Error())
-							break
-						} 
-						time.Sleep(1*time.Second)
-					}
-					continue
-				}
-				if err := scanner.init();err != nil {
-					scanner.log(err.Error())
-					break
-				}
-				scanner.fork = false
-			}
-	}
-	return nil
-}
-
-func (scanner *BlockScanner)Stop()  {
-	scanner.lock.Unlock()
-	scanner.stop <- true
-}
-*/
