@@ -28,7 +28,7 @@ func Sql_SelectFromDatabase(input string,database string,limit string)error{
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
 
-	RE,err := SQL.Query("select "+input+" from "+database+"  desc")
+	RE,err := SQL.Query("select "+input+" from "+database)
 	if err!=nil{
 		panic(err)
 	}
@@ -38,17 +38,28 @@ func Sql_SelectFromDatabase(input string,database string,limit string)error{
 	return nil
 }
 
-func Sql_SelectAthorAddress(input string,database string)error{
+func Sql_SelectAthorCopyright(input string)error{
 	mysql := Connection2mysql()
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
 	
-	RE,err := SQL.Query("select "+input+" from "+database+" desc")
+	//tmp,err := SQL.Query("select tx_hash from eth_transaction_log_copyright where data = \""+input+"\"")
+	tmp,err := SQL.Query("select `tx_hash` from eth_transaction_log_copyright where data = \""+input+"\"")
+
 	if err!=nil{
 		panic(err)
 	}
-	for index := range RE{
-		fmt.Println(string(RE[index][input]))
+	if string(tmp[0]["tx_hash"])==""{
+		fmt.Println("Don't have this copyright")
+		return nil
 	}
+	RE,err := SQL.Query("select `from` from eth_transaction_scan where `hash` = \""+string(tmp[0]["tx_hash"])+"\"")
+	if err!=nil{
+		panic(err)
+	}
+	if string(RE[0]["from"])==""{
+		fmt.Println("Not have this copyright")
+	}
+	fmt.Println(string(RE[0]["from"]))
 	return nil
 }

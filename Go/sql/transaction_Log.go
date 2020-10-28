@@ -5,7 +5,7 @@ type TransactionLogCopyright struct{
 	BlockHash string `json:"blockHash" xorm:"not null "`
 	Address string `json:"address" gencodec:"required"  xorm:"not null "`
 	Topics []string `json:"topics" gencodec:"required" xorm:"not null "`
-	Data []string `json:"data" gencodec:"required" xorm:"not null "`
+	Data string `json:"data" gencodec:"required" xorm:"not null "`
 	TxHash string`json:"transactionHash" gencodec:"required" xorm:"not null "`
 	TxIndex string `json:"transactionIndex" xorm:"not null VARCHAR(255) "`
 	Index string `json:"logIndex" xorm:"not null VARCHAR(255)"`

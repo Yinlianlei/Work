@@ -75,7 +75,7 @@ func (logget *LogGet)GET()error{
 			blocklog.BlockHash = fullBlock.BlockHash
 			blocklog.Address =  LogS.Address
 			blocklog.Topics = LogS.Topics
-			blocklog.Data = append(blocklog.Data,LogS.Data)
+			blocklog.Data = LogS.Data
 			blocklog.TxHash = LogS.TxHash
 			blocklog.TxIndex = LogS.TxIndex
 			blocklog.Index = LogS.Index
