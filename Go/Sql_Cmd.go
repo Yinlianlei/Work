@@ -42,24 +42,28 @@ func Sql_SelectAthorCopyright(input string)error{
 	mysql := Connection2mysql()
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
-	
-	//tmp,err := SQL.Query("select tx_hash from eth_transaction_log_copyright where data = \""+input+"\"")
-	tmp,err := SQL.Query("select `tx_hash` from eth_transaction_log_copyright where data = \""+input+"\"")
+
+	tmp,err := SQL.Query("select `tx_hash` from eth_transaction_log_copyright where data = `"+input+"`")
 
 	if err!=nil{
 		panic(err)
 	}
+
 	if string(tmp[0]["tx_hash"])==""{
 		fmt.Println("Don't have this copyright")
 		return nil
 	}
-	RE,err := SQL.Query("select `from` from eth_transaction_scan where `hash` = \""+string(tmp[0]["tx_hash"])+"\"")
+
+	RE,err := SQL.Query("select `from` from eth_transaction_scan where `hash` = `"+string(tmp[0]["tx_hash"])+"`")
+	
 	if err!=nil{
-		panic(err)
-	}
-	if string(RE[0]["from"])==""{
+		fmt.Println(err)
+		return nil
+	}else if RE == nil || string(RE[0]["from"])==""{
 		fmt.Println("Not have this copyright")
+		return nil
 	}
+	
 	fmt.Println(string(RE[0]["from"]))
 	return nil
 }
