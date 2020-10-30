@@ -383,7 +383,7 @@ func (r *ETHRPCRequester) GetBlockInfoByNumber(blockNumber *big.Int) (*model.Ful
 	return &fullBlock, nil
 }
 
-func (r *ETHRPCRequester) GetBlockInfoByNumber2(blockNumber *big.Int) (*model.Transaction_Scan, error) {
+func (r *ETHRPCRequester)GetBlockInfoByNumber2(blockNumber *big.Int) (*model.Transaction_Scan, error) {
 	number := fmt.Sprintf("%#x", blockNumber)
 	methodName := "eth_getBlockByNumber"
 	fullBlock := model.Transaction_Scan{}

@@ -66,8 +66,26 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 			// 下面加 1，因为上一次数据库存的是已经遍历完了的
 			scanner.lastNumber.Add(scanner.lastNumber,new(big.Int).SetInt64(1))
 		}
+
+		//初始化合约节点
+		if emp,_:=scanner.mysql.Db.IsTableEmpty("eth_block");emp==true {
+			ad,_ := new(big.Int).SetString("8896244",10)
+			RE,err := scanner.ethRequester.GetBlockInfoByNumber2(ad)
+			if err != nil {
+				return err
+			}
+
+			tx := scanner.mysql.Db.NewSession()
+			defer tx.Close()
+			
+			if _, err = tx.Insert(&RE.Transactions); err != nil {
+				tx.Rollback() // 事务回滚
+				return err
+			}
+		}
 		return nil
 	}
+
 	if err := init();err != nil {
 		return err
 	}

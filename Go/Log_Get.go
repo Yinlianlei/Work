@@ -117,26 +117,11 @@ func (scanner *LogGet) LogInit(address string) error  {
 }
 
 func TestGetLogByHash(ad string)error{
-	mainNet := "https://ropsten.infura.io/v3/2e6d9331f74d472a9d47fe99f697ca2b"
 	requestor := NewETHRPCRequester(mainNet)
 	address := ad
-	fmt.Println(ad)
 
-	option := sql.MysqlOptions{
-		Hostname: "127.0.0.1",
-		Port: "3306",
-		DbName: "eth_relay",
-		User: "Yinlianlei",
-		Password: "1114561520",
-		TablePrefix: "eth_",
-		MaxOpenConnections: 10,
-		MaxIdleConnections:5,
-		ConnMaxLifetime: 15,
-	}
-	tables := []interface{}{}
-	tables = append(tables,sql.TransactionLogCopyright{},sql.TransactionLogPurchase{})
-	mysql := sql.NewMqSQLConnector(&option,tables)
-
+	mysql:=Connection2mysql()
+	
 	logget:= NewLogGet(*requestor,mysql)
 	err := logget.LogStart(address)
 	if err != nil {
