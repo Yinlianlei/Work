@@ -95,15 +95,21 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 			scanner.log(err.Error())
 			return
 		}
-		time.Sleep(1 * time.Second) // 延迟一秒开始下一轮
+		time.Sleep(10 * time.Microsecond) // 延迟一秒开始下一轮
 	}
 	
 	// 启动一个协程来遍历区块
 	go func(){
 		i,_:=scanner.ethRequester.GetLatestBlockNumber()
 		fmt.Println("Newest Block Number Is ",i)
-		ts:=0
+		t1 := time.Now()
 		for {
+			t2 := time.Now()
+			t3 := t2.Sub(t1)
+			if(t3 >= 15*time.Second ){
+				fmt.Println("Sleep")
+				time.Sleep(5*time.Second)//sleep
+			}
 			select {
 			case <-scanner.stop: // 监听是否退出遍历
 				scanner.log("finish block scanner!")
@@ -111,7 +117,7 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 				return
 			default:
 				if !scanner.fork {
-					if i==scanner.lastNumber && ts<=12 {
+					if i==scanner.lastNumber {
 						scanner.Stop()
 						return
 					}
@@ -119,10 +125,6 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 					execute(i)
 					//fmt.Println("233")
 					continue
-				}
-				if err := init();err != nil {
-					scanner.log(err.Error())
-					return
 				}
 				scanner.fork = false
 			}
@@ -247,19 +249,6 @@ func (scanner *BlockScanner) scan(i *big.Int) error {
 		// 小，则等待新区块生成
 		scanner.Stop()
 		return nil
-		/*
-		Next:
-		for {
-			select {
-			case <-time.After(time.Duration(4 * time.Second)):
-				number,err := scanner.ethRequester.GetLatestBlockNumber()
-				if err == nil && number.Cmp(scanner.lastNumber) >= 0 {
-					targetNumber = number
-					break Next
-				}
-			}
-		}
-		*/
 	}
 	// 获取区块信息
 	fullBlock, err := scanner.retryGetBlockInfoByNumber(targetNumber)

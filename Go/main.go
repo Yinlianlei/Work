@@ -13,13 +13,13 @@ func main()  {
 	//TestGetLogByHash(address)
 	//data := "0x484d451ed72b1d242c9ae14f0f233f1ea81a95641bfc506077bf3c6c9bb25315"
 	//Sql_SelectAthorCopyright(data)
-
+	//testSleep()
 	//	mysql:=Connection2mysql()
 
 	//RE,_ :=mysql.Db.IsTableEmpty("eth_block")
 	//requestor := NewETHRPCRequester(mainNet)
 	//fmt.Println(RE,err)
-	//TestBlockScanner_Start()
+	TestBlockScanner_Start()
 	//spider_contract("1")
 	//Sql_SelectFromDatabase("data","eth_transaction_log_purchase","")
 	//fmt.Println(time.Now().Format("2006-01-02 15:04:05"))

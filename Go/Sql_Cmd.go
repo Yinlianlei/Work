@@ -45,3 +45,4 @@ func Sql_SelectAthorCopyright(input string)error{
 	fmt.Println(string(RE[0]["from"]))
 	return nil
 }
+
