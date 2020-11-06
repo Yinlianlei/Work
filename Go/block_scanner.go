@@ -109,6 +109,7 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 			if(t3 >= 15*time.Second ){
 				fmt.Println("Sleep")
 				time.Sleep(5*time.Second)//sleep
+				t1 = time.Now()
 			}
 			select {
 			case <-scanner.stop: // 监听是否退出遍历
