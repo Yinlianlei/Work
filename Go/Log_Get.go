@@ -116,11 +116,13 @@ func (scanner *LogGet) LogInit(address string) error  {
 	return nil
 }
 
-func TestGetLogByHash(ad string)error{
+func GetLogByHash(ad string)error{
+	//contract := "0xDFFF3A34b669374Ac670e3ED42e395D7a57dA44f"
 	requestor := NewETHRPCRequester(mainNet)
 	address := ad
 
 	mysql:=Connection2mysql()
+	//fmt.Println(contract)
 	
 	logget:= NewLogGet(*requestor,mysql)
 	err := logget.LogStart(address)
@@ -129,4 +131,34 @@ func TestGetLogByHash(ad string)error{
 	}
 
 	return nil
+}
+
+func GetCopyright(){
+	contract := "0xdfff3a34b669374ac670e3ed42e395d7a57da44f"
+	//contract := "0x8f19fb82e4b56610f687644897c899d6e5916186"
+	mysql:=Connection2mysql()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	op := []sql.TransactionScan{}
+	//op1 := []sql.TransactionLogCopyright{}
+	//op2 := []sql.TransactionLogPurchase{}
+
+	err := SQL.Table("eth_transaction_scan").Where("`to` = ?", contract).Find(&op)
+	if err != nil{
+		panic(err)
+	}
+
+	fmt.Println("Copyright comfirm!")
+
+	if op != nil {
+		for k,i := range op[:] {
+			j,_  := json.Marshal(i.Hash)
+			fmt.Println(string(j))
+			GetLogByHash(op[k].Hash)
+		}
+	}
+
+	SQL.Query("truncate table eth_transaction_scan")
+
 }

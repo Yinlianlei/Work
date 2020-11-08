@@ -14,6 +14,7 @@ func TestBlockScanner_Start()  {
 	if err!=nil{
 		panic(err)
 	}
+	
 	for{
 		if _,ok:=<-CMD;ok{
 			break

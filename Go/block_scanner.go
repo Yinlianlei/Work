@@ -34,6 +34,8 @@ func NewBlockScanner(requester ETHRPCRequester, mysql sql.MySQLConnector) *Block
 
 func (scanner *BlockScanner) Start(CMD chan bool) error {
 	scanner.lock.Lock()
+	
+
 	init := func() error {
 		// 寻找出上一次成功遍历的区块
 		_, err := scanner.mysql.Db.
@@ -45,7 +47,10 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 		}
 		if scanner.lastBlock.BlockHash == "" {
 			// 首次启动，从节点中获取，并初始化
-			latestBlockNumber, err := scanner.ethRequester.GetLatestBlockNumber()
+			ad,_ := new(big.Int).SetString("9023780",10)
+			//latestBlockNumber, err := scanner.ethRequester.GetLatestBlockNumber()
+			latestBlockNumber := ad
+
 			if err != nil {
 				return err
 			}
@@ -66,23 +71,6 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 			// 下面加 1，因为上一次数据库存的是已经遍历完了的
 			scanner.lastNumber.Add(scanner.lastNumber,new(big.Int).SetInt64(1))
 		}
-
-		//初始化合约节点
-		if emp,_:=scanner.mysql.Db.IsTableEmpty("eth_block");emp==true {
-			ad,_ := new(big.Int).SetString("8896244",10)
-			RE,err := scanner.ethRequester.GetBlockInfoByNumber2(ad)
-			if err != nil {
-				return err
-			}
-
-			tx := scanner.mysql.Db.NewSession()
-			defer tx.Close()
-			
-			if _, err = tx.Insert(&RE.Transactions); err != nil {
-				tx.Rollback() // 事务回滚
-				return err
-			}
-		}
 		return nil
 	}
 
@@ -95,22 +83,15 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 			scanner.log(err.Error())
 			return
 		}
-		time.Sleep(10 * time.Microsecond) // 延迟一秒开始下一轮
+		time.Sleep(100 * time.Microsecond) // 延迟一秒开始下一轮
 	}
-	
+
 	// 启动一个协程来遍历区块
 	go func(){
 		i,_:=scanner.ethRequester.GetLatestBlockNumber()
 		fmt.Println("Newest Block Number Is ",i)
 		t1 := time.Now()
 		for {
-			t2 := time.Now()
-			t3 := t2.Sub(t1)
-			if(t3 >= 15*time.Second ){
-				fmt.Println("Sleep")
-				time.Sleep(5*time.Second)//sleep
-				t1 = time.Now()
-			}
 			select {
 			case <-scanner.stop: // 监听是否退出遍历
 				scanner.log("finish block scanner!")
@@ -118,13 +99,22 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 				return
 			default:
 				if !scanner.fork {
-					if i==scanner.lastNumber {
-						scanner.Stop()
-						return
+					t2 := time.Now()
+					t3 := t2.Sub(t1)
+					if(t3 >= 5*time.Second ){
+						fmt.Println("**************************************************")
+						GetCopyright()
+						fmt.Println("**************************************************")
+						t1 = time.Now()
 					}
-					//ts++
+					//fmt.Println(scanner.lastNumber,i )
+					if i.Cmp(scanner.lastNumber) == -1 {
+						//scanner.Stop()
+						i,_ = scanner.ethRequester.GetLatestBlockNumber()
+						time.Sleep(5*time.Second)
+						fmt.Println(i)
+					}
 					execute(i)
-					//fmt.Println("233")
 					continue
 				}
 				scanner.fork = false
@@ -132,6 +122,20 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 		}
 	}()
 	return nil
+	/*
+	t1 := time.Now()
+				t2 := time.Now()
+			t3 := t2.Sub(t1)
+			if(t3 >= 15*time.Second ){
+				fmt.Println("Sleep")
+				time.Sleep(5*time.Second)//sleep
+				t1 = time.Now()
+			}
+								if i ==  scanner.lastNumber{
+						scanner.Stop()
+						continue
+					}
+	*/
 }
 
 func (scanner *BlockScanner) Stop() {
@@ -248,7 +252,7 @@ func (scanner *BlockScanner) scan(i *big.Int) error {
 	// +1 if x >  y
 	if latestNumber.Cmp(scanner.lastNumber) < 0 {
 		// 小，则等待新区块生成
-		scanner.Stop()
+		//scanner.Stop()
 		return nil
 	}
 	// 获取区块信息
