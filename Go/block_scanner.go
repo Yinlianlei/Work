@@ -47,7 +47,7 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 		}
 		if scanner.lastBlock.BlockHash == "" {
 			// 首次启动，从节点中获取，并初始化
-			ad,_ := new(big.Int).SetString("9023780",10)
+			ad,_ := new(big.Int).SetString("9052920",10)
 			//latestBlockNumber, err := scanner.ethRequester.GetLatestBlockNumber()
 			latestBlockNumber := ad
 
@@ -103,7 +103,7 @@ func (scanner *BlockScanner) Start(CMD chan bool) error {
 					t3 := t2.Sub(t1)
 					if(t3 >= 5*time.Second ){
 						fmt.Println("**************************************************")
-						GetCopyright()
+						scanner.GetCopyright()
 						fmt.Println("**************************************************")
 						t1 = time.Now()
 					}
@@ -311,4 +311,71 @@ func (scanner *BlockScanner) scan(i *big.Int) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+func (scanner *BlockScanner)GetCopyright()error{
+	contract := "0xdfff3a34b669374ac670e3ed42e395d7a57da44f"
+	//contract := "0x8f19fb82e4b56610f687644897c899d6e5916186"
+	SQL :=scanner.mysql.Db.NewSession()
+	defer SQL.Close()
+
+	op := []sql.TransactionScan{}
+	//op1 := []sql.TransactionLogCopyright{}
+	//op2 := []sql.TransactionLogPurchase{}
+
+	err := SQL.Table("eth_transaction_scan").Where("`to` = ?", contract).Find(&op)
+	if err != nil{
+		panic(err)
+	}
+
+	if op != nil {
+		for _,i := range op[:] {
+			fullBlock, err := scanner.ethRequester.GetTransactionReceipt(i.Hash)
+			if err != nil{
+				return err
+			}		
+
+			for _,LogS := range fullBlock.Logs{
+				if (len(LogS.Data[2:])==64){
+					blocklog := sql.TransactionLogCopyright{}
+					blocklog.BlockNumber = scanner.hexToTen(string(fullBlock.BlockNumber)).String()
+					blocklog.BlockHash = fullBlock.BlockHash
+					blocklog.Address =  LogS.Address
+					blocklog.Topics = LogS.Topics
+					blocklog.Data = LogS.Data
+					blocklog.TxHash = LogS.TxHash
+					blocklog.TxIndex = LogS.TxIndex
+					blocklog.Index = LogS.Index
+					blocklog.Removed = LogS.Removed
+					if _, err := SQL.Insert(&blocklog); err != nil{//insert
+						SQL.Rollback()
+						return err
+					}
+				}else if (len(LogS.Data[2:])==192){
+					blocklog := sql.TransactionLogPurchase{}
+					blocklog.BlockNumber = scanner.hexToTen(string(fullBlock.BlockNumber)).String()
+					blocklog.BlockHash = fullBlock.BlockHash
+					blocklog.Address =  LogS.Address
+					blocklog.Topics = LogS.Topics
+					for i:=0;i<(len(LogS.Data)-2)/64;i++{
+						fmt.Println(i,LogS.Data[2+i*64:66+i*64])
+						blocklog.Data = append(blocklog.Data,LogS.Data[2+i*64:66+i*64])
+					}
+					blocklog.TxHash = LogS.TxHash
+					blocklog.TxIndex = LogS.TxIndex
+					blocklog.Index = LogS.Index
+					blocklog.Removed = LogS.Removed
+					if _, err := SQL.Insert(&blocklog); err != nil{//insert
+						SQL.Rollback()
+						return err
+					}
+				}else{
+					return nil
+				}
+			}
+		}
+	}
+
+	SQL.Query("truncate table eth_transaction_scan")
+	return nil
 }
