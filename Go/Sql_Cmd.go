@@ -47,11 +47,16 @@ func Sql_SelectAthorCopyright(input string)error{
 	return nil
 }
 
+<<<<<<< HEAD
 func Sql_SelectLogin(id string, passwd string) (string,error){
+=======
+func Sql_SelectLogin(id string, passwd string):error{
+>>>>>>> 2ffa2e6d6bea06146e28154b2f7d2197afa0c4cf
 	mysql := Connection2mysql()
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
 
+<<<<<<< HEAD
 	RE := []sql.User{}
 	err := SQL.Table("eth_user").Where("`id` = ? AND `passwd` = ?",id,passwd).Find(&RE)
 	//("select Passwd,Id,Address from User where "+id+"=Id and "+passwd+"=Passwd")
@@ -87,4 +92,9 @@ func Sql_SelectRegister(id string, passwd string)(string,error){
 
 
 	return "",nil
+=======
+	RE,err := SQL.Query("select Passwd,Id from User where "+id+"=Id and "+passwd+"=Passwd")
+
+	fmt.Println(RE)
+>>>>>>> 2ffa2e6d6bea06146e28154b2f7d2197afa0c4cf
 }

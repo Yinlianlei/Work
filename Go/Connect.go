@@ -7,7 +7,7 @@ var mainNet string ="https://ropsten.infura.io/v3/2e6d9331f74d472a9d47fe99f697ca
 
 func Connection2mysql()sql.MySQLConnector{
 	option := sql.MysqlOptions{
-		Hostname: "127.0.0.1",
+		Hostname: "47.102.215.193",
 		Port: "3306",
 		DbName: "eth_relay",
 		//DbName: "tSQL",
@@ -19,7 +19,7 @@ func Connection2mysql()sql.MySQLConnector{
 		ConnMaxLifetime: 15,
 	}
 	tables := []interface{}{}
-	tables = append(tables,sql.TransactionLogCopyright{},sql.TransactionLogPurchase{},sql.Block{},sql.TransactionScan{})
+	tables = append(tables,sql.User,sql.TransactionLogCopyright{},sql.TransactionLogPurchase{},sql.Block{},sql.TransactionScan{})
 	//tables = append(tables,sql.Tsql{})
 	mysql := sql.NewMqSQLConnector(&option,tables)
 	return mysql
