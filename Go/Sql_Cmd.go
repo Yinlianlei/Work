@@ -46,3 +46,12 @@ func Sql_SelectAthorCopyright(input string)error{
 	return nil
 }
 
+func Sql_SelectLogin(id string, passwd string):error{
+	mysql := Connection2mysql()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	RE,err := SQL.Query("select Passwd,Id from User where "+id+"=Id and "+passwd+"=Passwd")
+
+	fmt.Println(RE)
+}
