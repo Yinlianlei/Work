@@ -35,7 +35,7 @@ func NewMqSQLConnector(options *MysqlOptions, tables []interface{})MySQLConnecto
 			options.User,options.Password,options.DbName)
 	}else {
 		url = fmt.Sprintf(
-			"%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True",
+			"%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 			options.User,options.Password,options.Hostname,options.Port,options.DbName)
 	}
 	db,err := xorm.NewEngine("mysql",url)

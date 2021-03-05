@@ -71,6 +71,7 @@ func (logget *LogGet)GET()error{
 	for _,LogS := range fullBlock.Logs{
 		if (len(LogS.Data[2:])==64){
 			blocklog := sql.TransactionLogCopyright{}
+			blocklog.Id = 0
 			blocklog.BlockNumber = scanner.hexToTen(string(fullBlock.BlockNumber)).String()
 			blocklog.BlockHash = fullBlock.BlockHash
 			blocklog.Address =  LogS.Address
@@ -88,6 +89,7 @@ func (logget *LogGet)GET()error{
 			}
 		}else if (len(LogS.Data[2:])==192){
 			blocklog := sql.TransactionLogPurchase{}
+			blocklog.Id = 0
 			blocklog.BlockNumber = scanner.hexToTen(string(fullBlock.BlockNumber)).String()
 			blocklog.BlockHash = fullBlock.BlockHash
 			blocklog.Address =  LogS.Address
