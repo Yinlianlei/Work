@@ -71,25 +71,29 @@ func (logget *LogGet)GET()error{
 	for _,LogS := range fullBlock.Logs{
 		if (len(LogS.Data[2:])==64){
 			blocklog := sql.TransactionLogCopyright{}
-			blocklog.BlockNumber = logget.hexToTen(string(fullBlock.BlockNumber)).String()
+			blocklog.BlockNumber = scanner.hexToTen(string(fullBlock.BlockNumber)).String()
 			blocklog.BlockHash = fullBlock.BlockHash
 			blocklog.Address =  LogS.Address
 			blocklog.Topics = LogS.Topics
+			blocklog.From = fullBlock.From
+			blocklog.To = fullBlock.To
 			blocklog.Data = LogS.Data
 			blocklog.TxHash = LogS.TxHash
 			blocklog.TxIndex = LogS.TxIndex
 			blocklog.Index = LogS.Index
 			blocklog.Removed = LogS.Removed
-			if _, err := tx.Insert(&blocklog); err != nil{//insert
-				tx.Rollback()
+			if _, err := SQL.Insert(&blocklog); err != nil{//insert
+				SQL.Rollback()
 				return err
 			}
-		}else{
+		}else if (len(LogS.Data[2:])==192){
 			blocklog := sql.TransactionLogPurchase{}
-			blocklog.BlockNumber = logget.hexToTen(string(fullBlock.BlockNumber)).String()
+			blocklog.BlockNumber = scanner.hexToTen(string(fullBlock.BlockNumber)).String()
 			blocklog.BlockHash = fullBlock.BlockHash
 			blocklog.Address =  LogS.Address
 			blocklog.Topics = LogS.Topics
+			blocklog.From = fullBlock.From
+			blocklog.To = fullBlock.To
 			for i:=0;i<(len(LogS.Data)-2)/64;i++{
 				fmt.Println(i,LogS.Data[2+i*64:66+i*64])
 				blocklog.Data = append(blocklog.Data,LogS.Data[2+i*64:66+i*64])
@@ -98,11 +102,15 @@ func (logget *LogGet)GET()error{
 			blocklog.TxIndex = LogS.TxIndex
 			blocklog.Index = LogS.Index
 			blocklog.Removed = LogS.Removed
-			if _, err := tx.Insert(&blocklog); err != nil{//insert
-				tx.Rollback()
+			if _, err := SQL.Insert(&blocklog); err != nil{//insert
+				SQL.Rollback()
 				return err
 			}
+		}else{
+			return nil
 		}
+	}
+}
 		
 	}
 	return nil

@@ -19,7 +19,7 @@ func Connection2mysql()sql.MySQLConnector{
 		ConnMaxLifetime: 15,
 	}
 	tables := []interface{}{}
-	tables = append(tables,sql.User,sql.TransactionLogCopyright{},sql.TransactionLogPurchase{},sql.Block{},sql.TransactionScan{})
+	tables = append(tables,sql.TransactionLogCopyright{},sql.TransactionLogPurchase{},sql.Block{},sql.TransactionScan{},sql.User{},sql.Detail{})
 	//tables = append(tables,sql.Tsql{})
 	mysql := sql.NewMqSQLConnector(&option,tables)
 	return mysql
