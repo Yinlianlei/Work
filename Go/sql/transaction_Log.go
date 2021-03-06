@@ -8,7 +8,7 @@ type TransactionLogCopyright struct{
 	Topics []string `json:"topics" gencodec:"required" xorm:"not null "`
 	From string `json:"from" gencodec:"required" xorm:"not null "`
 	To string `json:"to" gencodec:"required" xorm:"not null "`
-	Data string `json:"data" gencodec:"required" xorm:"not null "`
+	Data []string `json:"data" gencodec:"required" xorm:"not null "`
 	TxHash string`json:"transactionHash" gencodec:"required" xorm:"not null "`
 	TxIndex string `json:"transactionIndex" xorm:"not null VARCHAR(255) "`
 	Index string `json:"logIndex" xorm:"not null VARCHAR(255)"`

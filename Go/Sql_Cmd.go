@@ -6,6 +6,28 @@ import (
 	"./sql"
 )
 
+func Sql_SelectFrom(input string)(string,error){
+	mysql := Connection2mysql()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	//RE,_ := SQL.Query("select * from eth_transaction_log_copyright where `tx_hash` = \""+input+"\"")
+	
+	//fmt.Println(string(RE[0]["address"]))
+	
+	RE:=[]sql.TransactionLogCopyright{}
+	re := SQL.Table("eth_transaction_log_copyright").Where("`tx_hash` = ?", input).Find(&RE)
+	
+	if(len(RE)==0){
+		panic(re)
+		return "ERROR",nil
+	}
+
+	//fmt.Println(RE[0].Id)
+	//return string(RE[0].Data[2]),nil
+	return RE[0].Data[2],nil
+}
+
 func Sql_SelectFromDatabase(input string,database string,limit string)error{
 	mysql := Connection2mysql()
 	SQL :=mysql.Db.NewSession()
@@ -144,3 +166,39 @@ func Sql_Init()error{
 	return nil
 }
 
+func Sql_Insert() (string,error){
+	//EXAMPLE:
+	/*
+	var tags =[]string{"1","2"}
+	Sql_OnloadDetail("银链锁心",
+	"仿佛林间的小鹿一般，那属于孩子特有的纯真与自然.",
+	"0xdfff3a34b669374ac670e3ed42e395d7a57da44f", 
+	tags)
+	*/
+
+	mysql := Connection2mysql()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	In := []sql.TransactionLogCopyright{}
+	In = append(In,sql.TransactionLogCopyright{
+		Id:0,
+		BlockNumber: "1",
+		BlockHash: "2",
+		Address: "3",
+		Topics: []string{"4","44"},
+		From: "5",
+		To: "6",
+		Data: []string{"7","77","777"},
+		TxHash: "8",
+		TxIndex: "9",
+		Index: "10",
+		Removed: true})
+	
+	if _, err := SQL.Insert(&In); err != nil{//insert
+		SQL.Rollback()
+		return "ERROR_Can't insert detail",err
+	}
+
+	return "",nil
+}
