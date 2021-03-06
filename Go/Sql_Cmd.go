@@ -105,7 +105,7 @@ func Sql_OnloadDetail(title string, word string, address string, tags []string) 
 	defer SQL.Close()
 
 	In := []sql.Detail{}
-	In = append(In,sql.Detail{Title:title,Word:word,Tags:tags,Address:address,Time:time.Now()})
+	In = append(In,sql.Detail{Title:title,Word:word,Tags:tags,Address:address,Time:time.Now(),DeleteTF:false})
 	
 	if _, err := SQL.Insert(&In); err != nil{//insert
 		SQL.Rollback()
@@ -114,3 +114,33 @@ func Sql_OnloadDetail(title string, word string, address string, tags []string) 
 
 	return "",nil
 }
+
+func Sql_ShowCopyrightList(id string, passwd string) (string,error){
+	mysql := Connection2mysql()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	RE := []sql.User{}
+	SQL.Table("eth_user").Where("`id` = ? AND `passwd` = ?",id,passwd).Find(&RE)
+	//("select Passwd,Id,Address from User where "+id+"=Id and "+passwd+"=Passwd")
+
+	//fmt.Println(RE[0].Id)
+
+	//fmt.Println((RE))
+	if len(RE)==0 {
+		return "ERROR2",nil
+	}
+	//fmt.Println(string(RE[0]["Address"]))
+	return string(RE[0].Address),nil
+}
+//insert into eth_transaction_log_copyright values(0,"","","","","","","","","","",false)
+
+
+func Sql_Init()error{
+	mysql := Connection2mysql()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	return nil
+}
+
