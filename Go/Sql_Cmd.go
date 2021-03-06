@@ -12,12 +12,12 @@ func Sql_SelectFrom(input string)(string,error){
 	defer SQL.Close()
 
 	//RE,_ := SQL.Query("select * from eth_transaction_log_copyright where `tx_hash` = \""+input+"\"")
-	
+
 	//fmt.Println(string(RE[0]["address"]))
-	
+
 	RE:=[]sql.TransactionLogCopyright{}
-	re := SQL.Table("eth_transaction_log_copyright").Where("`tx_hash` = ?", input).Find(&RE)
-	
+	re := SQL.Table("eth_transaction_log_copyright").Where("`tx_hash` like ?", "%"+input+"%").Find(&RE)
+
 	if(len(RE)==0){
 		panic(re)
 		return "ERROR",nil
