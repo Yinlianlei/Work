@@ -338,10 +338,13 @@ func (scanner *BlockScanner)GetCopyright()error{
 			for _,LogS := range fullBlock.Logs{
 				if (len(LogS.Data[2:])==64){
 					blocklog := sql.TransactionLogCopyright{}
+					blocklog.Id = 0
 					blocklog.BlockNumber = scanner.hexToTen(string(fullBlock.BlockNumber)).String()
 					blocklog.BlockHash = fullBlock.BlockHash
 					blocklog.Address =  LogS.Address
 					blocklog.Topics = LogS.Topics
+					blocklog.From = fullBlock.From
+					blocklog.To = fullBlock.To
 					blocklog.Data = LogS.Data
 					blocklog.TxHash = LogS.TxHash
 					blocklog.TxIndex = LogS.TxIndex
@@ -353,10 +356,13 @@ func (scanner *BlockScanner)GetCopyright()error{
 					}
 				}else if (len(LogS.Data[2:])==192){
 					blocklog := sql.TransactionLogPurchase{}
+					blocklog.Id = 0
 					blocklog.BlockNumber = scanner.hexToTen(string(fullBlock.BlockNumber)).String()
 					blocklog.BlockHash = fullBlock.BlockHash
 					blocklog.Address =  LogS.Address
 					blocklog.Topics = LogS.Topics
+					blocklog.From = fullBlock.From
+					blocklog.To = fullBlock.To
 					for i:=0;i<(len(LogS.Data)-2)/64;i++{
 						fmt.Println(i,LogS.Data[2+i*64:66+i*64])
 						blocklog.Data = append(blocklog.Data,LogS.Data[2+i*64:66+i*64])
