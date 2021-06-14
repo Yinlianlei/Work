@@ -100,7 +100,7 @@ func Sql_Huawei_GetFid(uid string,id string,name string,university string,school
 	uid,name,university,school,course).Find(&RE)
 
 	if(len(RE) == 0){
-		return "",errors.New("查询出现错误")
+		return "查询出现错误",errors.New("Error")
 	}
 	var i = []string{}
 	i = append(i,"1")
@@ -140,7 +140,7 @@ func Sql_Huawei_Register2user(name,university,age,position string,gra int)(strin
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
 
-	RE := new(Huawei_grantedUser)
+	RE := new(Huawei_granted_user)
 
 	RE.Id = 0
 	RE.Name = name
@@ -153,17 +153,16 @@ func Sql_Huawei_Register2user(name,university,age,position string,gra int)(strin
 	err := SQL.Begin()
 	if err != nil {
 		SQL.Rollback()
-		return "ERROR",errors.New("TRANSACTION BEGIN FAILED")
+		return "TRANSACTION BEGIN FAILED",err
 	}
 
-
-	if _,err = SQL.Insert(RE);err != nil{
-		SQL.Rollback()
-		return "ERROR",errors.New("ERROR INSERT FAILED")
-	}
 	if _,err = SQL.Exec(de,name,age,position);err != nil{
 		SQL.Rollback()
-		return "ERROR",errors.New("ERROR DELETE GRANT_INFO FAILED")
+		return "ERROR DELETE GRANT_INFO FAILED",err
+	}
+	if _,err = SQL.Insert(RE);err != nil{
+		SQL.Rollback()
+		return "ERROR INSERT FAILED",err
 	}
 
 	err = SQL.Commit()
@@ -174,4 +173,49 @@ func Sql_Huawei_Register2user(name,university,age,position string,gra int)(strin
 
 
 	return "",nil
+}
+
+func Sql_Huawei_CourseUpload(id,org,name,info string)(string,error){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	TF := []Huawei_course{}
+	SQL.Table("huawei_course").Where("org = ? and name = ?",org,name).Find(&TF)
+
+	if len(TF) != 0 {
+		return "ERROR",errors.New("Course exist")
+	}
+
+	RE := new(Huawei_course)
+	RE.Id = id
+	RE.Org = org
+	RE.Name = name
+	RE.Info = info
+
+	if _,err := SQL.Insert(RE);err != nil{
+		SQL.Rollback()
+		return "ERROR",err
+	}
+
+	return "",nil
+}
+
+func Sql_Huawei_GetCourse(id,org,name string)([]string,error){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	RE := []Huawei_course{}
+	SQL.Table("huawei_course").Where("id = ? and org = ? and name = ?",id,org,name).Find(&RE)
+
+	if len(RE) == 0{
+		return nil,errors.New("NOT HAS THIS COURSE")
+	}
+
+	info := []string{}
+
+	info = append(info,RE[0].Org,RE[0].Name,RE[0].Info)
+
+	return info,nil
 }

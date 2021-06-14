@@ -26,11 +26,19 @@ type Huawei_grant2user struct{
 	Gra 		int		`json:"gra" xorm:"not null int"`//授权true/false
 }
 
-type Huawei_grantedUser struct{
-	Id			string	`json:"id" xorm:"varchar(255) pk unique"`//编号
-	Name 		string	`json:"name" xorm:"not null varchar(20)"`//姓名
-	Age 		string	`json:"age" xorm:"not null varchar(20)"`//年龄
-	Pwd			string	`json:"pwd" xorm:"not null varchar(20)"`
-	Position 	string	`json:"position" xorm:"not null varchar(20)"`//职位
-	Gra 		int		`json:"gra" xorm:"not null int"`//授权true/false
+type Huawei_granted_user struct{
+  //Id			int		`json:"id" xorm:"int pk autoincr unique"`//编号
+	Name 		string	`json:"name" xorm:"not null varchar(20) unique"`//姓名
+	University	string	`json:"university" xorm:"not null varchar(20)"`//学校
+    Age 		string	`json:"age" xorm:"not null varchar(20)"`//年龄
+    Position 	string	`json:"position" xorm:"not null varchar(20)"`//职位
+    Gra 		int		`json:"gra" xorm:"not null int"`//授权true/false
+}
+
+
+type Huawei_course struct{
+	Id			string	`json:"id" xorm:"not null pk unique"`
+	Org			string	`json:"org" xorm:"not null varchar(255)"`
+	Name		string	`json:"name" xorm:"not null varchar(255)"`
+	Info		string	`json:"info" xorm:"varchar(255)"`
 }
