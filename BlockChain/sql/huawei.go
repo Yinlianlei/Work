@@ -43,3 +43,49 @@ type Huawei_course struct{
 	Name		string	`json:"name" xorm:"not null varchar(255)"`
 	Info		string	`json:"info" xorm:"varchar(255)"`
 }
+
+
+type evidenceChian struct{
+	id			int
+	info		string
+	evidence	string
+}
+
+func Sql_Huawei_SearchEvidenceChain(fid string)([]evidenceChian,errors){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	RE := []Huawei_evidence{}
+	SQL.Table("huawei_evidence").Where("fid = ?",fid).Find(&RE)
+
+	if len(RE) == 0 {
+		return errors.New("ERROR EVIDENCE NOT EXIST")
+	}
+
+	R := []evidenceChian{}
+	for i := 0;i<len(RE);i++ {
+		post := &evidenceChian{i,RE[i].info,RE[i].evidence}
+		R = append(R,plus)
+	}
+
+	return R
+}
+
+func Sql_Huawei_InputEvidenceChain(fid,evidence,info string)(errors){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	RE := Huawei_evidence{}
+	RE.Fid = fid
+	RE.Evidence = evidence
+	RE.Info = info
+
+	if _,err := SQL.Insert(RE);err != nil {
+		SQL.Rollback()
+		errors.New("ERROR EVIDENCE NOT EXIST")
+	}
+
+	return nil
+}
