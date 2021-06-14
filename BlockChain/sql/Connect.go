@@ -53,7 +53,7 @@ func Connection2Huawei()MySQLConnector{
 		ConnMaxLifetime: 15,
 	}
 	tables := []interface{}{}
-	tables = append(tables,Huawei_fid_info{},Huawei_evidence{},Huawei_grant2user{},Huawei_grantedUser{})
+	tables = append(tables,Huawei_fid_info{},Huawei_evidence{},Huawei_grant2user{},Huawei_granted_user{})
 	mysql := NewMqSQLConnector(&option,tables)
 	return mysql
 }
