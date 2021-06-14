@@ -22,7 +22,7 @@ func Sql_Huawei_Login(name string,university string)error{
 	return nil
 }
 
-func Sql_Huawei_Register(name string,age int,position string, Gra int,university string)(string,error){
+func Sql_Huawei_Register(name string,university string,age,position string, Gra int)(string,error){
 	mysql := Connection2Huawei()
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
@@ -31,7 +31,7 @@ func Sql_Huawei_Register(name string,age int,position string, Gra int,university
 	SQL.Table("Huawei_grant2user").Where("`name` = ? AND `university` = ?",name,university).Find(&RE)
 	
 	
-	if(len(RE) == 0){
+	if(len(RE) != 0){
 		return "",errors.New("已注册")
 	}
 
@@ -110,4 +110,68 @@ func Sql_Huawei_GetFid(uid string,id string,name string,university string,school
 	fmt.Println(string(r))
 
 	return string(r),nil
+}
+
+func Sql_Huawei_upload(fid string,uid int,id,name,university,school,course string,times int)(string,error){//v
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	RE := new(Huawei_fid_info)
+
+	RE.Fid = fid
+	RE.Uid = uid
+	RE.Id = id
+	RE.Name = name
+	RE.University = university
+	RE.School = school
+	RE.Course = course
+	RE.Times = times
+
+	if _,r2 := SQL.Insert(RE);r2 != nil{
+		SQL.Rollback()
+		return "ERROR INSERT FAILED",r2
+	}
+	return "",nil
+}
+
+func Sql_Huawei_Register2user(name,university,age,position string,gra int)(string,error){//v
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	RE := new(Huawei_grantedUser)
+
+	RE.Id = 0
+	RE.Name = name
+	RE.University = university
+	RE.Age = age
+	RE.Position = position
+	RE.Gra = gra
+
+	de := "delete from huawei_grant2user where name = ? and age = ? and position = ?"
+	err := SQL.Begin()
+	if err != nil {
+		SQL.Rollback()
+		return "ERROR",errors.New("TRANSACTION BEGIN FAILED")
+	}
+
+
+	if _,err = SQL.Insert(RE);err != nil{
+		SQL.Rollback()
+		return "ERROR",errors.New("ERROR INSERT FAILED")
+	}
+	if _,err = SQL.Exec(de,name,age,position);err != nil{
+		SQL.Rollback()
+		return "ERROR",errors.New("ERROR DELETE GRANT_INFO FAILED")
+	}
+
+	err = SQL.Commit()
+	if err != nil{
+		SQL.Rollback()
+		return "ERROR",errors.New("ERROR COMMIT FAILED")
+	}
+
+
+	return "",nil
 }

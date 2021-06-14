@@ -47,13 +47,13 @@ func Connection2Huawei()MySQLConnector{
 		DbName: "Huawei",
 		User: "huawei",
 		Password: "huawei",
-		TablePrefix: "Huawei_",
+		//TablePrefix: "Huawei_",
 		MaxOpenConnections: 10,
 		MaxIdleConnections:5,
 		ConnMaxLifetime: 15,
 	}
 	tables := []interface{}{}
-	tables = append(tables,Huawei_fid_info{},Huawei_evidence{},Huawei_grant2user{})
+	tables = append(tables,Huawei_fid_info{},Huawei_evidence{},Huawei_grant2user{},Huawei_grantedUser{})
 	mysql := NewMqSQLConnector(&option,tables)
 	return mysql
 }
