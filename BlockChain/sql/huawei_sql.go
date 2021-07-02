@@ -22,7 +22,7 @@ func Sql_Huawei_Login(name string,university string)error{
 	return nil
 }
 
-func Sql_Huawei_Register(name string,university string,age,position string, Gra int)(string,error){
+func Sql_Huawei_Register2GrantUser(name string,university string,age,position string, Gra int)(string,error){
 	mysql := Connection2Huawei()
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
@@ -112,7 +112,7 @@ func Sql_Huawei_GetFid(uid string,id string,name string,university string,school
 	return string(r),nil
 }
 
-func Sql_Huawei_upload(fid string,uid int,id,name,university,school,course string,times int)(string,error){//v
+func Sql_Huawei_Upload(fid string,uid int,id,name,university,school,course string,times int)(string,error){//v
 	mysql := Connection2Huawei()
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
@@ -218,4 +218,123 @@ func Sql_Huawei_GetCourse(id,org,name string)([]string,error){
 	info = append(info,RE[0].Org,RE[0].Name,RE[0].Info)
 
 	return info,nil
+}
+
+func Sql_Huawei_StudentLogin(id,pwd string)(error){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	
+	RE := []Huawei_student{}
+	SQL.Table("huawei_student").Where("id=? AND pwd=?",id,pwd).Find(&RE)
+
+	if(len(RE) != 1){
+		SQL.Close()
+		return errors.New("LOGIN FAILD")
+	}
+
+	SQL.Close()
+	return nil
+}
+
+func Sql_Huawei_StudentRegiest(name,uni,sch,id,pwd,uid string)(error){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	
+	RE := new(Huawei_student)
+	RE.Name = name
+	RE.University = uni
+	RE.School = sch
+	if id == "" || pwd == "" || uid == "" {
+		SQL.Close()
+		return errors.New("EROR")
+	}
+
+	RE.Id = id
+	RE.Pwd = pwd
+	RE.Uid = uid
+
+	if _,err := SQL.Insert(RE);err != nil{
+		SQL.Rollback()
+		SQL.Close()
+		return err
+	}
+
+	SQL.Close()
+	return nil
+}
+
+func Sql_Huawei_StudentUpdate(name,uni,sch,uid string)(int64,error){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	
+	RE := new(Huawei_student)
+	RE.Name = name
+	RE.University = uni
+	RE.School = sch
+
+	re,err := SQL.Table("huawei_student").Where("uid = ?",uid).Update(RE)
+
+	if err != nil {
+		SQL.Rollback()
+		SQL.Close()
+		return 1,errors.New("Update failed")
+	}
+	if re == 0 {
+		SQL.Close()
+		return re,errors.New("Update failed")
+	}
+
+	SQL.Close()
+	return re,nil
+}
+
+func Sql_Huawei_MemoryInsert(hash string)(error){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+
+	RE := new(Huawei_memory)
+	RE.Hash = hash
+
+	if _,err := SQL.Insert(RE);err != nil{
+		SQL.Close()
+		return errors.New("Memory insert failed")
+	}
+	
+	SQL.Close()
+	return nil
+}
+
+func Sql_Huawei_MemoryInsertPlus(hash []string)(error){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+
+	RE := make([]Huawei_memory,len(hash))
+	for i:=0 ; i<len(hash) ; i++{
+		RE[i].Hash = hash[i]
+	 }
+	if _,err := SQL.Insert(&RE);err != nil{
+		SQL.Close()
+		return errors.New("Memory insert failed")
+	}
+	SQL.Close()
+	return nil
+}
+
+func Sql_Huawei_MemoryFunc()([]string){
+	mysql := Connection2Huawei()
+	SQL :=mysql.Db.NewSession()
+	defer SQL.Close()
+
+	RE := []Huawei_memory{}
+	SQL.Table("huawei_memory").Find(&RE)
+
+	if len(RE) == 0 {
+		return nil
+	}
+	R := []string{}
+	for _,i := range RE {
+		R = append(R,string(i.Hash))
+	}
+
+	return R
 }

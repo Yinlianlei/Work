@@ -1,5 +1,7 @@
 package sql
 
+import "errors"
+
 type Huawei_fid_info struct{
 	Fid 		string `json:"fid" xorm:"pk unique"`
 	Uid			int `json:"uid" xorm:"not null int"`//学前标识符
@@ -44,14 +46,26 @@ type Huawei_course struct{
 	Info		string	`json:"info" xorm:"varchar(255)"`
 }
 
-
-type evidenceChian struct{
-	id			int
-	info		string
-	evidence	string
+type Huawei_student struct{
+	Name		string 	`json:"name" xorm:"varchar(255)"`
+	University	string	`json:"university" xorm:"varchar(255)"`
+	School		string	`json:"school" xorm:"varchar(255)"`
+	Id			string	`json:"id" xorm:"not null varchar(255)"`
+	Pwd			string	`json:"pwd" xorm:"not null varchar(255)"`
+	Uid			string	`json:"uid" xorm:"not null varchar(255) unique"`
 }
 
-func Sql_Huawei_SearchEvidenceChain(fid string)([]evidenceChian,errors){
+type Huawei_memory struct{
+	Hash 		string	`json:"hash" xorm:"not null varchar(255) unique"`
+}
+
+type evidenceChian struct{
+	Id			int
+	Info		string
+	Evidence	string
+}
+
+func Sql_Huawei_SearchEvidenceChain(fid string)([]evidenceChian,error){
 	mysql := Connection2Huawei()
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
@@ -60,19 +74,20 @@ func Sql_Huawei_SearchEvidenceChain(fid string)([]evidenceChian,errors){
 	SQL.Table("huawei_evidence").Where("fid = ?",fid).Find(&RE)
 
 	if len(RE) == 0 {
-		return errors.New("ERROR EVIDENCE NOT EXIST")
+		return nil,nil
+		//errors.New("ERROR EVIDENCE NOT EXIST")
 	}
 
 	R := []evidenceChian{}
 	for i := 0;i<len(RE);i++ {
-		post := &evidenceChian{i,RE[i].info,RE[i].evidence}
-		R = append(R,plus)
+		post := evidenceChian{i,RE[i].Info,RE[i].Evidence}
+		R = append(R,post)
 	}
 
-	return R
+	return R,nil
 }
 
-func Sql_Huawei_InputEvidenceChain(fid,evidence,info string)(errors){
+func Sql_Huawei_InputEvidenceChain(fid,evidence,info string)(error){
 	mysql := Connection2Huawei()
 	SQL :=mysql.Db.NewSession()
 	defer SQL.Close()
