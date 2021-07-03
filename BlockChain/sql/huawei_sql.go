@@ -22,16 +22,18 @@ func Sql_Huawei_Login(name string,university string)error{
 	return nil
 }
 
-func Sql_Huawei_Register2GrantUser(name string,university string,age,position string, Gra int)(string,error){
+func Sql_Huawei_Register2GrantUser(id,name,age,position string, Gra int)(string,error){//changed
 	mysql := Connection2Huawei()
 	SQL :=mysql.Db.NewSession()
-	defer SQL.Close()
+
+	err := SQL.Begin()
 
 	RE := []Huawei_grant2user{}
-	SQL.Table("Huawei_grant2user").Where("`name` = ? AND `university` = ?",name,university).Find(&RE)
+	SQL.Table("Huawei_grant2user").Where("`name` = ?",name).Find(&RE)
 	
-	
-	if(len(RE) != 0){
+	if tmp := len(RE);tmp != 0{
+		SQL.Commit()
+		SQL.Close()
 		return "",errors.New("已注册")
 	}
 
@@ -40,13 +42,19 @@ func Sql_Huawei_Register2GrantUser(name string,university string,age,position st
 	newUser.Age = age
 	newUser.Position = position
 	newUser.Gra = Gra
-	newUser.Id = 0
-	newUser.University = university
+	newUser.Id = id
 
-	r1,r2 := SQL.Insert(newUser)
+	
+	_,err = SQL.Insert(newUser)
 
-	fmt.Println(r1,r2)
+	if err != nil {
+		SQL.Rollback()
+		SQL.Close()
+		return "",err
+	}
 
+	SQL.Commit()
+	SQL.Close()
 	return "",nil
 }
 
@@ -135,43 +143,48 @@ func Sql_Huawei_Upload(fid string,uid int,id,name,university,school,course strin
 	return "",nil
 }
 
-func Sql_Huawei_Register2user(name,university,age,position string,gra int)(string,error){//v
+func Sql_Huawei_Register2user(id,name,age,pwd,position string,gra int)(string,error){//v//changed
 	mysql := Connection2Huawei()
 	SQL :=mysql.Db.NewSession()
-	defer SQL.Close()
+
+	TF := []Huawei_grant2user{}
+	SQL.Table("huawei_grant2user").Where("name = ? and age = ? and position = ?",name,age,position).Find(&TF)
+
+	if len(TF) != 1 {
+		SQL.Close()
+		return "",errors.New("NOT GRANTED")
+	}
 
 	RE := new(Huawei_granted_user)
 
-	RE.Id = 0
+	RE.Id = id
 	RE.Name = name
-	RE.University = university
 	RE.Age = age
+	RE.Pwd = pwd
 	RE.Position = position
 	RE.Gra = gra
-
-	de := "delete from huawei_grant2user where name = ? and age = ? and position = ?"
+	
 	err := SQL.Begin()
+
+	_,err = SQL.Insert(RE)
+
 	if err != nil {
 		SQL.Rollback()
-		return "TRANSACTION BEGIN FAILED",err
+		SQL.Close()
+		return "",err
 	}
 
-	if _,err = SQL.Exec(de,name,age,position);err != nil{
+	de := new(Huawei_grant2user)
+	_,err = SQL.Where("name = ? and age = ? and position = ?",name,age,position).Delete(de)
+	
+	if err != nil {
 		SQL.Rollback()
-		return "ERROR DELETE GRANT_INFO FAILED",err
-	}
-	if _,err = SQL.Insert(RE);err != nil{
-		SQL.Rollback()
-		return "ERROR INSERT FAILED",err
+		SQL.Close()
+		return "",err
 	}
 
-	err = SQL.Commit()
-	if err != nil{
-		SQL.Rollback()
-		return "ERROR",errors.New("ERROR COMMIT FAILED")
-	}
-
-
+	SQL.Commit()
+	SQL.Close()
 	return "",nil
 }
 

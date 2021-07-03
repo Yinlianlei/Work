@@ -21,20 +21,22 @@ type Huawei_evidence struct{
 }
 
 type Huawei_grant2user struct{
-	Id			int		`json:"id" xorm:"int pk autoincr unique"`//编号
+	Id			string		`json:"id" xorm:"varchar(255) pk unique not null"`//编号
 	Name 		string	`json:"name" xorm:"not null varchar(20)"`//姓名
-	University	string	`json:"university" xorm:"not null varchar(20)"`//学校
+	//University	string	`json:"university" xorm:"not null varchar(20)"`//学校
     Age 		string	`json:"age" xorm:"not null varchar(20)"`//年龄
     Position 	string	`json:"position" xorm:"not null varchar(20)"`//职位
     Gra 		int		`json:"gra" xorm:"not null int"`//授权true/false
 }
 
 type Huawei_granted_user struct{
-	Id			int		`json:"id" xorm:"int pk autoincr unique"`//编号
-	Name 		string	`json:"name" xorm:"not null varchar(20) unique"`//姓名
-	University	string	`json:"university" xorm:"not null varchar(20)"`//学校
+	//Id			int		`json:"id" xorm:"int pk autoincr unique"`//编号
+	Id			string	`json:"id" xorm:"not null varchar(20) unique"`
+	Name 		string	`json:"name" xorm:"not null varchar(20)"`//姓名
+	//University	string	`json:"university" xorm:"not null varchar(20)"`//学校
     Age 		string	`json:"age" xorm:"not null varchar(20)"`//年龄
-    Position 	string	`json:"position" xorm:"not null varchar(20)"`//职位
+	Pwd			string  `json:"pwd" xorm:"not null varchar(20)"`//年龄
+	Position 	string	`json:"position" xorm:"not null varchar(20)"`//职位
     Gra 		int		`json:"gra" xorm:"not null int"`//授权true/false
 }
 
