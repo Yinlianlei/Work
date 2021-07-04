@@ -393,3 +393,19 @@ func Sql_Huawei_SearchTimes(uid,cid string)(int,error){
 func Sql_Huawei_ConnectClose(){
 	SQL.Close()
 }
+/*
+time1 := time.Now().Unix()
+	time2 := time.Now().Unix()
+	for i:=0 ; i<20 ; i++ {
+		//In = append(In,strconv.Itoa(i*200))
+		In := strconv.Itoa(i)
+		fmt.Println(sql.Sql_Huawei_MemoryInsert(In))
+		time2 = time.Now().Unix()
+		time.Sleep(2 * time.Second)
+		fmt.Println(time1,time2)
+		if time2 - time1 >= 10 { 
+			time1 = time2
+			go fmt.Println(sql.Sql_Huawei_MemoryFunc())
+		}
+	}
+*/
