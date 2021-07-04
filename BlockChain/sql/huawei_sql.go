@@ -372,6 +372,49 @@ func Sql_Huawei_StudentFinish(fid string)(error){
 	return nil
 }
 
+func Sql_Huawei_CourseEndorseInsert(cid,university string)(error){
+	{
+		Find := []Huawei_courseEndorse{}
+
+		SQL.Table("huawei_course_endorse").Where("course_id = ? and endorse_university = ?",cid,university).Find(&Find)
+
+		if len(Find)!=0 {
+			return errors.New("Endorse exist")
+		}
+	}
+
+	RE := new(Huawei_courseEndorse)
+	RE.CourseId = cid
+	RE.EndorseUniversity = university
+
+	if _,err:= SQL.Insert(RE);err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Sql_Huawei_CourseEndorseDelete(cid,university string)(error){
+	{
+		Find := []Huawei_courseEndorse{}
+
+		SQL.Table("huawei_course_endorse").Where("course_id = ? and endorse_university = ?",cid,university).Find(&Find)
+		
+		if len(Find) == 0 {
+			return errors.New("Endorse not exist")
+		}
+	}
+	
+	RE := new(Huawei_courseEndorse)
+	
+	_,err := SQL.Table("huawei_course_endorse").Where("course_id = ? and endorse_university = ?",cid,university).Delete(RE)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func Sql_Huawei_SearchTimes(uid,cid string)(int,error){
 	Stu := []Huawei_student{}
 	Cour := []Huawei_course{}
